@@ -1,0 +1,33 @@
+# tasks file for minikube
+---
+- name: Install kubectl using snap
+  ansible.builtin.snap:
+    name: kubectl
+    state: present
+    classic: yes
+
+- name: Download Minikube binary
+  ansible.builtin.get_url:
+    url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+    dest: /tmp/minikube
+    mode: '0755'
+
+- name: Move Minikube binary to /usr/local/bin
+  ansible.builtin.command:
+    cmd: mv /tmp/minikube /usr/local/bin/minikube
+    creates: /usr/local/bin/minikube
+
+- name: Start Minikube
+  ansible.builtin.command:
+    cmd: minikube start --memory=4096 --cpus=2 --driver=docker --tunnel=cni
+    creates: /home/ubuntu/.minikube
+
+- name: Check Minikube status
+  ansible.builtin.command:
+    cmd: minikube status
+  register: minikube_status
+
+- name: Debug Minikube status
+  ansible.builtin.debug:
+    msg: "{{ minikube_status.stdout }}"
+

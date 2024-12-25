@@ -1,0 +1,32 @@
+---
+# tasks file for docker
+# Update package index
+- name: Update apt package index
+  apt:
+    update_cache: yes
+    
+# Add Docker GPG key
+- name: Add Docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+# Add Docker repository
+- name: Add Docker repository
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+    state: present
+
+# Install Docker
+- name: Install Docker
+  apt:
+    name: docker-ce
+    state: present
+
+# Ensure Docker service is running
+- name: Ensure Docker service is running
+  service:
+    name: docker
+    state: started
+    enabled: true
+

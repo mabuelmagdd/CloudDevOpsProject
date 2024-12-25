@@ -1,0 +1,10 @@
+---
+- hosts: tag__project-instance
+  become: yes
+  roles:
+    - role: docker
+    - role: git 
+    - role: jenkins
+    - role: sonarqube
+    - role: minikube
+    - role: jenkins-minikube 

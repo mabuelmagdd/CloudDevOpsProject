@@ -1,0 +1,57 @@
+---
+#tasks for creating a service account and binding it to the admin role
+- name: Create Kubernetes service account for Jenkins
+  ansible.builtin.shell:
+    cmd: kubectl create serviceaccount jenkins
+  become: true
+
+- name: Create cluster role binding for Jenkins
+  ansible.builtin.shell:
+    cmd: kubectl create clusterrolebinding jenkins-admin --clusterrole=admin --serviceaccount=default:jenkins
+  become: true
+
+- name: Create Kubernetes token for Jenkins
+  ansible.builtin.shell:
+    cmd: kubectl create secret generic jenkins-token --from-literal=token=$(kubectl create token jenkins) --namespace=default
+  become: true
+
+- name: Get Jenkins token
+  ansible.builtin.shell:
+    cmd: kubectl get secret jenkins-token -o jsonpath='{.data.token}' | base64 --decode
+  register: jenkins_token
+  become: true
+
+- name: Debug Jenkins token
+  ansible.builtin.debug:
+    msg: "{{ jenkins_token.stdout }}"
+
+#Jenkins user setup
+#ensure that the correct permissions are set for the Kubernetes configuration file.
+- name: Login as Jenkins user
+  ansible.builtin.shell:
+    cmd: sudo -i -u jenkins
+  become: true
+
+- name: Verify Kubernetes config file exists
+  ansible.builtin.stat:
+    path: "/home/jenkins/.kube/config"
+  register: kube_config_stat
+
+- name: Add Permissions to Access Kubernetes Cluster
+  ansible.builtin.file:
+    path: "/home/jenkins/.kube/config"
+    mode: '0600'
+  when: kube_config_stat.stat.exists
+  become: true
+
+
+
+# verify the ~/.kube/config file is available and has proper permissions for the Jenkins user.
+- name: Ensure .kube directory exists for Jenkins user
+  ansible.builtin.file:
+    path: "/home/jenkins/.kube"
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0755'
+  become: true
