@@ -7,6 +7,8 @@ pipeline {
         IMAGE_NAME = "finalprojectcode"
         IMAGE_TAG = "latest"
         REGISTRY = "docker.io"
+        DEPLOYMENT_FILE = "deployment.yaml"
+        SERVICE_FILE = "service.yaml"
         K8S_TOKEN = credentials('k8s-token') // Token for Kubernetes authentication
         SONARQUBE_TOKEN = credentials('sonarqube-token')
     }
@@ -54,7 +56,7 @@ pipeline {
         stage('Deploy to Minikube') {
             steps {
                 script {
-                    deployK8s(DEPLOYMENT_FILE)
+                    deployK8s(DEPLOYMENT_FILE,SERVICE_FILE)
                 }
             }
         }
