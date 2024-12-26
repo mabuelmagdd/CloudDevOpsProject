@@ -4,6 +4,7 @@ def call() {
 
     try {
         // Run unit tests using Gradle wrapper
+        sh 'chmod +x gradlew'
         sh './gradlew test'
     } catch (Exception e) {
         currentBuild.result = 'FAILURE'
