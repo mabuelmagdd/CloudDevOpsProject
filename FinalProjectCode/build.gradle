@@ -29,7 +29,7 @@ test {
 sonarqube {
     properties {
         property "sonar.projectKey", "cloudDevOps-project"
-        property "sonar.host.url", "http://localhost:9000"  // This will be overridden by the dynamic URL
+        property "sonar.host.url", System.getenv('SONARQUBE_URL') // This will be overridden by the dynamic URL
         property "sonar.login", System.getenv('SONARQUBE_TOKEN')
     }
 }
