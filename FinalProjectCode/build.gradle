@@ -2,6 +2,7 @@ plugins {
     id 'org.springframework.boot' version '2.6.3'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
+    id "org.sonarqube" version "3.3"
 }
 
 group = 'com.example'
@@ -22,4 +23,13 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+//
+sonarqube {
+    properties {
+        property "sonar.projectKey", "cloudDevOps-project"
+        property "sonar.host.url", "http://localhost:9000"  // This will be overridden by the dynamic URL
+        property "sonar.login", System.getenv('SONARQUBE_TOKEN')
+    }
 }
