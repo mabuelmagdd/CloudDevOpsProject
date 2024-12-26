@@ -16,8 +16,8 @@ def call() {
     // Run the SonarQube analysis
     withSonarQubeEnv('SonarQube') {
         sh """
-        ./gradlew sonarqube -Dsonar.projectKey=my-project \
-                              -Dsonar.host.url=${sonarQubeUrl} \
+        ./gradlew sonarqube -Dsonar.projectKey=cloudDevOps-project \
+                              -Dsonar.host.url=${SONARQUBE_URL} \
                               -Dsonar.login=${SONARQUBE_TOKEN}
         """
     }
