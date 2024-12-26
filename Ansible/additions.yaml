@@ -1,0 +1,30 @@
+#Jenkins user setup
+#ensure that the correct permissions are set for the Kubernetes configuration file.
+- name: Login as Jenkins user
+  ansible.builtin.shell:
+    cmd: sudo -i -u jenkins
+  become: true
+
+- name: Verify Kubernetes config file exists
+  ansible.builtin.stat:
+    path: "/home/jenkins/.kube/config"
+  register: kube_config_stat
+
+- name: Add Permissions to Access Kubernetes Cluster
+  ansible.builtin.file:
+    path: "/home/jenkins/.kube/config"
+    mode: '0600'
+  when: kube_config_stat.stat.exists
+  become: true
+
+
+
+# verify the ~/.kube/config file is available and has proper permissions for the Jenkins user.
+- name: Ensure .kube directory exists for Jenkins user
+  ansible.builtin.file:
+    path: "/home/jenkins/.kube"
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0755'
+  become: true

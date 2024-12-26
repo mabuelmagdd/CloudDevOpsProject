@@ -1,11 +1,11 @@
---- 
-plugin: aws_ec2
+---
+plugin: amazon.aws.aws_ec2
 regions:
   - us-east-1
 filters:
-  # this selects only running instances with tag Name of value Ansible
   "tag:Name": "project-instance"
   "instance-state-name": "running"
 keyed_groups:
   - key: tags.Name
-    prefix: 'tag_'
+    prefix: tag__
+
