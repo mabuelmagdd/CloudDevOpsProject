@@ -1,4 +1,5 @@
 def call() {
+     sh 'sudo apt-get install curl'
     // Get the EC2 Instance IP by querying AWS CLI or using any method that returns the IP address
     def ec2Ip = sh(script: 'curl http://169.254.169.254/latest/meta-data/public-ipv4', returnStdout: true).trim()
     
