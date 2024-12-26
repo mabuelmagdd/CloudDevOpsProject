@@ -4,20 +4,37 @@ pipeline {
     agent any
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
-        IMAGE_NAME = "nginx-test"
+        IMAGE_NAME = "finalprojectcode"
         IMAGE_TAG = "latest"
         REGISTRY = "docker.io"
-        DEPLOYMENT_FILE = "deployment.yaml"
         K8S_TOKEN = credentials('k8s-token') // Token for Kubernetes authentication
+        SONARQUBE_TOKEN = credentials('sonarqube-token')
     }
 
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/mabuelmagdd/test.git'
+               gitCheckout()
             }
         }
-
+        
+        stage('Unit Test') {
+                steps {
+                    unitTest()
+                }
+            }
+        
+        stage('Build JAR') {
+            steps {
+                buildJar()
+            }
+        }
+        
+        stage('SonarQube') {
+            steps {
+                runSonarQubeAnalysis()
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script {
@@ -33,15 +50,7 @@ pipeline {
                 }
             }
         }
-
-        stage('Update Deployment YAML') {
-            steps {
-                script {
-                    updateYaml(DEPLOYMENT_FILE, REGISTRY, DOCKER_HUB_CREDENTIALS_USR, IMAGE_NAME, IMAGE_TAG)
-                }
-            }
-        }
-
+        
         stage('Deploy to Minikube') {
             steps {
                 script {
