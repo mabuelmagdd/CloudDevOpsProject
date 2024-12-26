@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finalprojectcode-deployment
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: finalprojectcode
+  template:
+    metadata:
+      labels:
+        app: finalprojectcode
+    spec:
+      containers:
+      - name: finalprojectcode
+        image: your-dockerhub-username/finalprojectcode:latest
+        ports:
+        - containerPort: 8081
