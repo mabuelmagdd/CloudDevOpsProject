@@ -1,5 +1,5 @@
 def call() {
-    git branch: 'main', url = 'https://github.com/Ibrahim-Adell/FinalProjectCode'
+    git branch: 'main', url = 'https://github.com/mabuelmagdd/FinalProjectCode'
     echo "Cloning repository from ${repoUrl}"
     checkout scm
 }
