@@ -10,7 +10,7 @@ pipeline {
         DEPLOYMENT_FILE = "deployment.yaml"
         SERVICE_FILE = "service.yaml"
         K8S_TOKEN = credentials('k8s-token') // Token for Kubernetes authentication
-        SONARQUBE_TOKEN = credentials('sonarqube-token')
+        SONARQUBE_SERVER = 'SonarQube' 
     }
 
     stages {
@@ -35,7 +35,7 @@ pipeline {
         
         stage('SonarQube') {
             steps {
-                runSonarQubeAnalysis()
+                runSonarQubeAnalysis(env.SONARQUBE_SERVER)
             }
         }
         stage('Build Docker Image') {
