@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
       - name: finalprojectcode
-        image: your-dockerhub-username/finalprojectcode:latest
+        image: maryamabualmagd/finalprojectcode:latest
         ports:
         - containerPort: 8081
