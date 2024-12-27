@@ -16,6 +16,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
+               echo "Testing shared library!"
                gitCheckout()
             }
         }
