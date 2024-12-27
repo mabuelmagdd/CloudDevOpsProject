@@ -1,10 +1,8 @@
-def call(String sonarProjectKey, String sonarHostUrl, String sonarLogin) {
+def call(String sonarServer) {
     // Run the SonarQube analysis
-    withSonarQubeEnv('SonarQube') {
+    withSonarQubeEnv(sonarServer) {
         sh """
-        ./gradlew sonarqube -Dsonar.projectKey=${sonarProjectKey} \
-                              -Dsonar.host.url=${sonarHostUrl} \
-                              -Dsonar.login=${sonarLogin}
+        ./gradlew sonarqube 
         """
     }
 }
