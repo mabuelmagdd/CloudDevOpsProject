@@ -1,4 +1,5 @@
 # Jenkins Pipeline Setup Guide
+![Alt text](../images/jenkins-architecture.png)
 
 ## Prerequisites
 
@@ -21,6 +22,8 @@ Before running the pipeline, configure Jenkins to connect to SonarQube:
 - Access your SonarQube instance and log in.
 - Generate a new token by going to **My Account** → **Security** → **Generate Tokens**.
 - Copy the generated token for later use.
+  
+![Alt text](../images/sonarqube-token.png)
 
 #### Set up SonarQube URL in Jenkins
 1. Navigate to **Jenkins Dashboard** → **Manage Jenkins** → **Configure System**.
@@ -29,6 +32,8 @@ Before running the pipeline, configure Jenkins to connect to SonarQube:
    - **Server Name**: SonarQube (or any preferred name).
    - **Server URL**: `http://<your-sonarqube-url>`
    - **Authentication Token**: Paste the token you copied earlier.
+     
+![Alt text](../images/sonarqube-server.png)
 
 ### 3. Jenkins Shared Library
 To use shared libraries in Jenkins:
@@ -40,6 +45,8 @@ To use shared libraries in Jenkins:
    - **Repository URL**: The Git repository URL of your shared library.
    - **Branch**: `main` (or any branch you prefer).
    - **Credentials**: If the repository is private, provide the necessary credentials.
+
+   ![Alt text](../images/shared-library.png)
 
 ### 4. Jenkins Credentials Setup
 You will need to create and configure credentials for Docker, Minikube, and SonarQube.
@@ -59,6 +66,8 @@ You will need to create and configure credentials for Docker, Minikube, and Sona
 1. In Jenkins, go to **Manage Jenkins** → **Manage Credentials** → **(global)** → **Add Credentials**.
 2. Set **Kind** to **Secret text**.
 3. Enter the SonarQube authentication token and give it the ID `sonar-token`.
+
+![Alt text](../images/credentials.png)
 
 ### 5. Minikube Configuration
 Ensure that Jenkins has access to Minikube's critical files:
@@ -94,6 +103,21 @@ Once the setup is complete, you can execute the pipeline. Here’s a breakdown o
 
 #### 8. **Post Actions**
    - Cleans up by removing the Docker image after the deployment.
+     
+### Pipeline Result
+- **Successful Pipeline Build**
+
+  ![Alt text](../images/jenkins-run.png)
+
+- **SonarQube Analysis**
+
+  ![Alt text](../images/sonar-result.png)
+
+- **Kubernetes Cluster**
+
+  ![Alt text](../images/check-k8s.png)
+
+  ![Alt text](../images/app.png)
 
 ---
 
