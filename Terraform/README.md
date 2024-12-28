@@ -3,7 +3,7 @@
 
 This section contains the Terraform scripts for provisioning the cloud infrastructure on AWS. The infrastructure includes a Virtual Private Cloud (VPC), subnet, EC2 instance, and CloudWatch for monitoring. Terraform modules are used for better code reuse and organization.
 
-![Alt text](images/aws_architecture.png)
+![Alt text](../images/aws_architecture.png)
 
 
 ## Overview
