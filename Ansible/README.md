@@ -2,6 +2,8 @@
 
 This README provides an overview of the configuration and automation setup using Ansible for various components in the Cloud DevOps Project. It explains the purpose of each component, emphasizes the use of Ansible roles and dynamic inventory, and briefly lists the tasks managed by Ansible playbooks.
 
+![Alt text](../images/ansible.png)
+
 ### Ansible Roles and Dynamic Inventory:
 - **Roles**: Ensures better modularity and reusability, allowing the role to be used across multiple environments if necessary.
 - **Dynamic Inventory**: Ansible dynamically fetches the list of target hosts (EC2 instances) from the infrastructure provisioned by Terraform. This removes the need to manually manage static IP addresses in the playbooks.
