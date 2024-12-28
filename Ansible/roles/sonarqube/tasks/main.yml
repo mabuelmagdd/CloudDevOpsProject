@@ -1,0 +1,261 @@
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  # Updates the package cache on the system to ensure that all apt packages are up-to-date.
+  # This task is necessary to ensure the system has the latest information about available packages.
+
+- name: Install prerequisites
+  apt:
+    name:
+      - openjdk-17-jdk
+      - wget
+      - unzip
+      - gnupg
+      - ca-certificates
+    state: present
+  # Installs the essential packages required for the SonarQube installation.
+  # Java (openjdk-17-jdk) is necessary to run SonarQube, and other tools (wget, unzip, gnupg, and ca-certificates) help with downloading and managing packages.
+
+- name: Install required packages
+  apt:
+    name:
+      - wget
+      - python3-psycopg2
+      - acl
+      - nginx
+    state: latest
+  # Installs additional packages like Python dependencies (python3-psycopg2), web server (nginx), and access control lists (acl).
+  # These packages ensure that the environment is ready for SonarQube and related components.
+
+- name: Update APT repositories and cache on Debian/Ubuntu
+  apt:
+    update_cache: yes
+    force_apt_get: yes
+    cache_valid_time: 3600
+  # Forces an update of apt repositories and caches to ensure that the latest package information is available.
+  # It helps to prevent outdated package versions from being installed.
+
+- name: Upgrade all packages
+  apt:
+    upgrade: dist
+    force_apt_get: yes
+  # Upgrades all installed packages to their latest versions.
+  # This ensures that the system is fully up-to-date and secure before starting the SonarQube installation.
+
+- name: Set up Postgres 14 repo
+  shell: |
+    echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+  # Adds the PostgreSQL repository to the system for installing PostgreSQL 14.
+  # PostgreSQL is the database backend that SonarQube uses, and adding the repo ensures the correct version can be installed.
+
+- name: Install postgresql
+  apt:
+    name: postgresql-14
+    update_cache: yes
+  notify:
+    - Start Postgresql
+  # Installs PostgreSQL 14, which is required for SonarQube to store data.
+  # It also ensures that PostgreSQL is correctly configured by starting the service.
+
+- name: Ensure PostgreSQL is listening on *
+  lineinfile:
+    dest: /etc/postgresql/14/main/postgresql.conf
+    regexp: '^listen_addresses\s*='
+    line: "listen_addresses='*'"
+    state: present
+  notify: Restart Postgresql
+  # Modifies the PostgreSQL configuration to listen on all IP addresses.
+  # This is necessary to allow SonarQube to connect to the database, even if it's on a different server.
+
+- name: Add new configuration to "pg_hba.conf"
+  blockinfile:
+    dest: /etc/postgresql/14/main/pg_hba.conf
+    block: |
+      host    all             all             0.0.0.0/0                md5
+      host    all             all             ::/0                     md5
+  notify: Restart Postgresql
+  # Updates the pg_hba.conf file to allow connections from any IP address.
+  # This is required for SonarQube to access the database over the network.
+
+- name: Create a Superuser PostgreSQL database user
+  become: true
+  become_user: postgres
+  postgresql_user:
+    name: '{{ postgres_root_user }}'
+    password: '{{ postgres_root_pass }}'
+    role_attr_flags: CREATEDB,SUPERUSER,CREATEROLE
+    encrypted: yes
+    state: present
+  # Creates a superuser for PostgreSQL with the ability to create databases and roles.
+  # This user will be used for administrative tasks in PostgreSQL.
+
+- name: Change password for the PostgreSQL user in OS
+  ansible.builtin.user:
+    name: "{{ my_postgres_user }}"
+    state: present
+    password: "{{ my_postgres_password | password_hash('sha512') }}"
+  # Changes the operating system password for the PostgreSQL user.
+  # Ensures that the OS-level authentication is synchronized with the PostgreSQL user's credentials.
+
+- name: Create Sonar User in PostgreSQL
+  become: yes
+  become_user: "{{ my_postgres_user }}"
+  postgresql_user:
+    name: "{{ psql_sonar_username }}"
+    password: "{{ psql_sonar_password }}"
+    role_attr_flags: CREATEDB,SUPERUSER,CREATEROLE
+    encrypted: yes
+    login_user: postgres
+    db: postgres
+  tags:
+    - user-add
+  # Creates a user in PostgreSQL specifically for SonarQube.
+  # This user will have the necessary permissions to interact with the SonarQube database.
+
+- name: Create SonarQube Database
+  become: yes
+  become_user: "{{ my_postgres_user }}"
+  postgresql_db:
+    name: sonar
+    owner: "{{ psql_sonar_username }}"
+    login_user: postgres
+  tags:
+    - db-add
+  # Creates the SonarQube database.
+  # This is where SonarQube will store its data, and it must be created before starting SonarQube.
+
+- name: Ensure vm.max_map_count is set correctly
+  ansible.builtin.sysctl:
+    name: vm.max_map_count
+    value: 262144
+    state: present
+    reload: yes
+  # Ensures that the vm.max_map_count kernel parameter is set to a value required by SonarQube.
+  # This is important because SonarQube needs this value to be set correctly to run properly, especially with large datasets.
+
+- name: Persist vm.max_map_count in sysctl.conf
+  lineinfile:
+    path: /etc/sysctl.conf
+    regexp: '^vm.max_map_count'
+    line: 'vm.max_map_count=262144'
+    state: present
+  # Makes sure that the vm.max_map_count setting persists after system reboots.
+  # Ensures that SonarQube can run without issues after a restart.
+
+- name: Download SonarQube
+  ansible.builtin.get_url:
+    url: "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.1.69595.zip"
+    dest: /tmp/sonarqube.zip
+  # Downloads the SonarQube zip file.
+  # This file contains all the necessary components to run SonarQube.
+
+- name: Extract SonarQube
+  ansible.builtin.unarchive:
+    src: /tmp/sonarqube.zip
+    dest: /opt/
+    remote_src: yes
+  # Extracts the downloaded SonarQube zip file to the /opt directory.
+  # This step places the SonarQube binaries in the correct location for execution.
+
+- name: Ensure group "sonar" exists
+  ansible.builtin.group:
+    name: sonar
+    state: present
+  tags:
+    - change-ownership-sonar
+  # Creates the "sonar" group.
+  # This group will be used to assign appropriate permissions to the SonarQube user.
+
+- name: Add the user 'sonar' with a specific home directory and group 'sonar'
+  ansible.builtin.user:
+    name: sonar
+    group: sonar
+    home: /opt/sonarqube-{{ sonarqube_version }}
+  tags:
+    - change-ownership-sonar
+  # Creates the "sonar" user and assigns it to the "sonar" group.
+  # The user will have access to SonarQube’s directory, allowing it to manage SonarQube’s processes.
+
+- name: Recursively change ownership of the /opt/{{ sonarqube_version }} directory
+  ansible.builtin.file:
+    path: /opt/sonarqube-{{ sonarqube_version }}
+    state: directory
+    recurse: yes
+    owner: sonar
+    group: sonar
+  tags:
+    - change-ownership-sonar
+  # Changes the ownership of the SonarQube directory to the "sonar" user and group.
+  # This ensures that the SonarQube service can read and write to the directory.
+
+- name: SonarQube configuration.
+  blockinfile:
+    path: /opt/sonarqube-{{ sonarqube_version }}/conf/sonar.properties
+    state: present
+    block: |
+      sonar.jdbc.username={{psql_sonar_username}}
+      sonar.jdbc.password={{psql_sonar_password}}
+      sonar.web.host=0.0.0.0
+      sonar.web.port={{sonar_web_port}}
+      sonar.jdbc.url=jdbc:postgresql://localhost:5432/sonar
+      sonar.web.javaAdditionalOpts=-server
+      sonar.log.level=INFO
+      sonar.path.logs=logs
+  # Configures the SonarQube properties, including database credentials and web server settings.
+  # This task ensures that SonarQube connects to the PostgreSQL database and listens on the correct network interface.
+
+- name: This file is required for SonarQube to run as a service.
+  blockinfile:
+    path: /etc/systemd/system/sonar.service
+    create: true
+    backup: yes
+    state: present
+    block: |
+      [Unit]
+      Description=SonarQube service
+      After=syslog.target network.target
+      [Service]
+      Type=forking
+      ExecStart=/opt/sonarqube-{{ sonarqube_version }}/bin/linux-x86-64/sonar.sh start
+      ExecStop=/opt/sonarqube-{{ sonarqube_version }}/bin/linux-x86-64/sonar.sh stop
+      User=sonar
+      Group=sonar
+      Restart=always
+      LimitNOFILE=65536
+      LimitNPROC=4096
+      [Install]
+      WantedBy=multi-user.target
+  notify:
+    - Reload systemd
+    - Start sonar
+  # Creates a systemd service file for SonarQube.
+  # This allows SonarQube to be managed as a service, enabling automatic start on boot.
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  # Reloads systemd to apply the new SonarQube service configuration.
+  # This is necessary to make systemd aware of the new SonarQube service.
+
+- name: Start SonarQube
+  ansible.builtin.systemd:
+    name: sonar
+    state: started
+  # Starts the SonarQube service.
+  # This will launch SonarQube and make it accessible according to the service configuration.
+
+- name: Enable SonarQube service to start on boot
+  ansible.builtin.systemd:
+    name: sonar
+    enabled: yes
+  # Enables the SonarQube service to start automatically on system boot.
+  # This ensures that SonarQube is always running after a reboot.
+  
+- name: Allow port 9000 through UFW
+  ansible.builtin.command: ufw allow 9000
+  register: ufw_result
+  ignore_errors: true
+  # Opens port 9000 in the firewall, allowing web traffic to access the SonarQube web interface.
+  # SonarQube uses port 9000 by default for the web interface, so this step ensures users can connect to it.
+

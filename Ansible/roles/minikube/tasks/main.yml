@@ -1,0 +1,86 @@
+# tasks file for minikube
+---
+- name: Install kubectl using snap
+  ansible.builtin.snap:
+    name: kubectl
+    state: present
+    classic: yes
+
+- name: Download Minikube binary
+  ansible.builtin.get_url:
+    url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+    dest: /tmp/minikube
+    mode: '0755'
+
+- name: Move Minikube binary to /usr/local/bin
+  ansible.builtin.command:
+    cmd: mv /tmp/minikube /usr/local/bin/minikube
+    creates: /usr/local/bin/minikube
+
+- name: Add user to Docker group
+  ansible.builtin.user:
+    name: ubuntu
+    groups: docker
+    append: yes
+
+- name: Log out and back in to apply Docker group changes
+  ansible.builtin.shell:
+    cmd: "exit"
+  when: ansible_user == 'ubuntu'
+
+- name: Start Minikube as non-root user
+  ansible.builtin.command:
+    cmd: minikube start --memory=4096 --cpus=2 --driver=docker
+  become: false
+  register: minikube_start
+  ignore_errors: true  # Ignore errors if Minikube is already running
+
+- name: Wait for Minikube profile to be created
+  ansible.builtin.pause:
+    minutes: 3  # Wait for 3 minute to allow Minikube to initialize
+  when: minikube_start.rc == 0  # Only wait if Minikube started successfully
+
+- name: Check Minikube status
+  ansible.builtin.command:
+    cmd: minikube status
+  when: minikube_start.rc == 0  # Only run this if Minikube started successfully
+  register: minikube_status
+  retries: 5  # Retry 5 times
+  delay: 10  # Wait 10 seconds between retries
+  ignore_errors: true  # Handle any errors if Minikube isn't yet running
+
+- name: Debug Minikube status
+  ansible.builtin.debug:
+    msg: "{{ minikube_status.stdout }}"
+  when: minikube_status is defined
+
+- name: Create Minikube Tunnel Service File
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/minikube-tunnel.service
+    content: |
+      [Unit]
+      Description=Minikube Tunnel
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/minikube tunnel
+      Restart=always
+      User=ubuntu
+      Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+
+      [Install]
+      WantedBy=multi-user.target
+  become: true
+
+- name: Reload systemd daemon
+  ansible.builtin.command:
+    cmd: systemctl daemon-reload
+  become: true
+
+- name: Enable Minikube Tunnel Service
+  ansible.builtin.systemd:
+    name: minikube-tunnel.service
+    enabled: yes
+    state: started
+  become: true
+
