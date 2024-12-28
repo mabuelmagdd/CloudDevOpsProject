@@ -31,7 +31,7 @@ After provisioning the EC2 instance using Terraform, we use Ansible to automate 
 - Installing necessary packages such as Git, Docker, Java, Jenkins, Minikube and SonarQube.
 - Setting up environment variables and configuring the instance to run the application.
 
-This section uses Ansible roles for better organization and reusability. Detailed steps can be found in the [Ansible README](./Ansible/README.md).
+This section uses Ansible roles and dynamic inventory for better organization and reusability. Detailed steps can be found in the [Ansible README](./Ansible/README.md).
 
 ---
 
@@ -47,7 +47,7 @@ In this section, we set up a Jenkins pipeline that automates the CI/CD process. 
 - Push Image to Docker Registry
 - Deploy on Minikube
 
-We also use a shared Jenkins library and Jenkins slave for efficient pipeline execution. For detailed configuration, check the [Jenkins README](./Jenkins/README.md).
+We also use a shared Jenkins library for efficient pipeline execution. For detailed configuration, check the [Jenkins README](./Jenkins/README.md).
 
 ---
 
