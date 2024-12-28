@@ -3,6 +3,7 @@
 
 This section contains the Terraform scripts for provisioning the cloud infrastructure on AWS. The infrastructure includes a Virtual Private Cloud (VPC), subnet, EC2 instance, and CloudWatch for monitoring. Terraform modules are used for better code reuse and organization.
 
+![Alt text](images/aws_architecture.png)
 
 ## Overview
 
@@ -18,6 +19,10 @@ This section contains the Terraform scripts for provisioning the cloud infrastru
 - **terraform.tfvars**: Holds the variable values for deployment (such as CIDR blocks, instance types, etc.).
 - **providers.tf**: Configures the AWS provider for Terraform.
 - **backend.tf**: Configures the **S3** and **DynamoDB** backend for storing Terraform state files.
+  ![Alt text](images/bucket.png)
+  
+  ![Alt text](images/dynamodb.png)
+  
 - **ec2-module**: A module for provisioning EC2 instances.
 - **vpc-module**: A module for provisioning the VPC, including subnets and security groups.
 - **cw-module**: A module for configuring CloudWatch alarms and notifications.
@@ -100,8 +105,11 @@ module "cw" {
 
 This code uses three modules:
 - `vpc-module` to create the VPC and subnets.
+  ![Alt text](images/vpc.png)
 - `ec2-module` to create an EC2 instance inside the VPC.
+  ![Alt text](images/ec2.png)
 - `cw-module` to create CloudWatch alarms and monitor the EC2 instance.
+  ![Alt text](images/cw.png)
 
 ## Important Notes
 
