@@ -5,6 +5,7 @@ This section contains the Terraform scripts for provisioning the cloud infrastru
 
 ![Alt text](images/aws_architecture.png)
 
+
 ## Overview
 
 ### Provisioned Resources:
