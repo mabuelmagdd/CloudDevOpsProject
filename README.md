@@ -1,4 +1,4 @@
-# CloudDevOpsProject
+# Cloud DevOps Project
 
 This project demonstrates a complete Cloud DevOps pipeline, utilizing Terraform for infrastructure provisioning, Ansible for configuration management, and Jenkins for continuous integration. The application is containerized using Docker and deployed to AWS EC2 instances managed through Terraform. The CI/CD pipeline ensures seamless code integration and deployment to Kubernetes.
 
